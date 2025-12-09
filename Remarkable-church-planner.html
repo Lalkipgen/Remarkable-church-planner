@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Remarkable Church AI Planner</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #f3f4f6;
+      --bg-dark: #111827;
+      --panel: #ffffff;
+      --primary: #fb923c;
+      --primary-dark: #ea580c;
+      --accent: #0f172a;
+      --border: #e5e7eb;
+      --text: #111827;
+      --muted: #6b7280;
+      --radius-lg: 16px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top left, #fee2e2 0, #f3f4f6 40%, #e0f2fe 100%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      background: rgba(15, 23, 42, 0.96);
+      color: #f9fafb;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.6);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    header h1 {
+      font-size: 1.15rem;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    header h1 span.logo {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #fb923c, #f97316);
+      color: #111827;
+      font-weight: 800;
+      font-size: 0.9rem;
+    }
+    header small {
+      color: #e5e7eb;
+      font-size: 0.8rem;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: 260px minmax(0, 1fr);
+      flex: 1;
+      min-height: 0;
+    }
+    nav {
+      padding: 16px;
+      backdrop-filter: blur(10px);
+      background: rgba(15, 23, 42, 0.94);
+      color: #e5e7eb;
+    }
+    nav h2 {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #9ca3af;
+      margin: 0 0 8px;
+    }
+    .nav-section { margin-bottom: 18px; }
+    .nav-link {
+      display: block;
+      width: 100%;
+      text-align: left;
+      padding: 8px 10px;
+      margin-bottom: 4px;
+      border: none;
+      border-radius: 999px;
+      background: transparent;
+      color: #e5e7eb;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .nav-link span.emoji { margin-right: 8px; }
+    .nav-link.active {
+      background: linear-gradient(90deg, #fb923c, #f97316);
+      color: #111827;
+      font-weight: 600;
+    }
+    .nav-link:hover:not(.active) {
+      background: rgba(31, 41, 55, 0.95);
+    }
+    main {
+      padding: 18px;
+      overflow: auto;
+    }
+    .card {
+      background: rgba(255, 255, 255, 0.98);
+      border-radius: var(--radius-lg);
+      padding: 18px 20px 22px;
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.15);
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      max-width: 1100px;
+      margin: 0 auto 24px;
+    }
+    .card h2 {
+      margin-top: 0;
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .card h2 span.badge {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      background: rgba(251, 146, 60, 0.12);
+      border-radius: 999px;
+      padding: 3px 8px;
+      color: #9a3412;
+    }
+    .card p.lead {
+      margin-top: 4px;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin-top: 12px;
+    }
+    label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+      color: #4b5563;
+    }
+    input[type="text"],
+    input[type="number"],
+    input[type="date"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 7px 9px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      font-size: 0.9rem;
+      font-family: inherit;
+      outline: none;
+      background: #f9fafb;
+      transition: border 0.15s, box-shadow 0.15s, background 0.15s;
+    }
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 1px rgba(251, 146, 60, 0.45);
+      background: #ffffff;
+    }
+    textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .btn {
+      border-radius: 999px;
+      padding: 8px 15px;
+      font-size: 0.85rem;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      transition: transform 0.05s, box-shadow 0.1s, background 0.15s;
+      font-weight: 600;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: #111827;
+      box-shadow: 0 10px 20px rgba(251, 146, 60, 0.45);
+    }
+    .btn-outline {
+      background: transparent;
+      color: var(--accent);
+      border: 1px solid var(--border);
+    }
+    .btn:active {
+      transform: translateY(1px);
+      box-shadow: none;
+    }
+    .output {
+      margin-top: 14px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: #0f172a;
+      color: #e5e7eb;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+        "Liberation Mono", "Courier New", monospace;
+      font-size: 0.8rem;
+      max-height: 380px;
+      overflow: auto;
+      white-space: pre-wrap;
+      border: 1px solid rgba(148, 163, 184, 0.55);
+    }
+    .hint {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 3px;
+    }
+    @media (max-width: 840px) {
+      .layout { grid-template-columns: 1fr; }
+      nav {
+        display: flex;
+        overflow-x: auto;
+        padding-bottom: 10px;
+      }
+      .nav-section { margin-right: 14px; margin-bottom: 0; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>
+      <span class="logo">RC</span>
+      Remarkable Church AI Planner
+      <small> • 12-Month Next-Gen Strategy</small>
+    </h1>
+    <small>Built for N. Chaljang Baptist Church & friends</small>
+  </header>
+
+  <div class="layout">
+    <nav>
+      <div class="nav-section">
+        <h2>Planning Apps</h2>
+        <button class="nav-link active" data-section="roadmap">
+          <span class="emoji">🧭</span> 12-Month Roadmap
+        </button>
+        <button class="nav-link" data-section="coach">
+          <span class="emoji">✅</span> Monthly Coach
+        </button>
+        <button class="nav-link" data-section="epic">
+          <span class="emoji">🎉</span> Epic Event Planner
+        </button>
+      </div>
+      <div class="nav-section">
+        <h2>People & Impact</h2>
+        <button class="nav-link" data-section="metrics">
+          <span class="emoji">📊</span> Metrics Dashboard
+        </button>
+        <button class="nav-link" data-section="followup">
+          <span class="emoji">🌱</span> Follow-Up Journey
+        </button>
+        <button class="nav-link" data-section="leaders">
+          <span class="emoji">🚀</span> Youth Leaders Track
+        </button>
+      </div>
+    </nav>
+
+    <main>
+      <!-- 1. Roadmap -->
+      <section id="roadmap" class="card">
+        <h2>🧭 12-Month Roadmap <span class="badge">Step 1</span></h2>
+        <p class="lead">
+          Enter your church profile. The app will build a 12-month plan
+          (Assess → Dream → Strategize → Plan → Execute).
+        </p>
+
+        <div class="grid-2">
+          <div>
+            <label for="rm-church-name">Church name</label>
+            <input id="rm-church-name" type="text" placeholder="N. Chaljang Baptist Church" />
+          </div>
+          <div>
+            <label for="rm-location">Location</label>
+            <input id="rm-location" type="text" placeholder="Town / City, Country" />
+          </div>
+          <div>
+            <label for="rm-members">Total members</label>
+            <input id="rm-members" type="number" min="10" placeholder="500" />
+          </div>
+          <div>
+            <label for="rm-age">Average age (estimate)</label>
+            <input id="rm-age" type="number" min="10" max="90" placeholder="42" />
+          </div>
+          <div>
+            <label for="rm-youth-att">Current weekly youth attendance</label>
+            <input id="rm-youth-att" type="number" min="0" placeholder="60" />
+          </div>
+          <div>
+            <label for="rm-youth-pop">Estimated youth (13–19) in area</label>
+            <input id="rm-youth-pop" type="number" min="0" placeholder="800" />
+          </div>
+          <div>
+            <label for="rm-budget">Event / youth budget level</label>
+            <select id="rm-budget">
+              <option value="low">Low</option>
+              <option value="medium" selected>Medium</option>
+              <option value="high">High</option>
+            </select>
+          </div>
+          <div>
+            <label for="rm-start-month">Start month</label>
+            <select id="rm-start-month">
+              <option>January</option><option>February</option><option>March</option>
+              <option>April</option><option>May</option><option>June</option>
+              <option>July</option><option>August</option><option>September</option>
+              <option>October</option><option>November</option><option>December</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="margin-top:12px;">
+          <label for="rm-challenges">Main challenges (optional)</label>
+          <textarea id="rm-challenges" placeholder="Example: few teenagers, busy parents, lack of volunteers..."></textarea>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-primary" id="rm-generate">
+            ⚙️ Generate 12-month plan
+          </button>
+          <button class="btn btn-outline" id="rm-clear">
+            🧹 Clear inputs
+          </button>
+        </div>
+
+        <div class="hint">
+          This prints a structured 12-month roadmap below.
+        </div>
+
+        <div id="rm-output" class="output"></div>
+      </section>
+
+      <!-- 2. Monthly Coach -->
+      <section id="coach" class="card" style="display:none;">
+        <h2>✅ Monthly Execution Coach <span class="badge">Step 2</span></h2>
+        <p class="lead">
+          Paste your roadmap, tell the app what month you’re in, and get a weekly checklist.
+        </p>
+
+        <div class="grid-2">
+          <div>
+            <label for="mc-month">Current month number</label>
+            <input id="mc-month" type="number" min="1" max="12" placeholder="3" />
+          </div>
+          <div>
+            <label for="mc-week">Week of the month</label>
+            <select id="mc-week">
+              <option value="1">Week 1</option>
+              <option value="2">Week 2</option>
+              <option value="3">Week 3</option>
+              <option value="4">Week 4</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="margin-top:12px;">
+          <label for="mc-roadmap-json">Paste roadmap JSON (from above)</label>
+          <textarea id="mc-roadmap-json" placeholder='{ "twelve_month_plan": [ ... ] }'></textarea>
+        </div>
+
+        <div style="margin-top:12px;">
+          <label for="mc-progress">What’s completed / blocked?</label>
+          <textarea id="mc-progress" placeholder="Example: Finished assessment, still missing youth demographic map."></textarea>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-primary" id="mc-generate">
+            📋 Generate this week’s checklist
+          </button>
+        </div>
+
+        <div id="mc-output" class="output"></div>
+      </section>
+
+      <!-- 3. Epic Event Planner -->
+      <section id="epic" class="card" style="display:none;">
+        <h2>🎉 Epic Event Planner & Budget <span class="badge">Step 3</span></h2>
+        <p class="lead">
+          Plan a youth Epic Event: budget, prep timeline, and follow-up ideas.
+        </p>
+
+        <div class="grid-2">
+          <div>
+            <label for="ep-name">Event name</label>
+            <input id="ep-name" type="text" placeholder="Hope Night" />
+          </div>
+          <div>
+            <label for="ep-date">Event date</label>
+            <input id="ep-date" type="date" />
+          </div>
+          <div>
+            <label for="ep-size">Expected attendance</label>
+            <input id="ep-size" type="number" min="20" placeholder="250" />
+          </div>
+          <div>
+            <label for="ep-budget">Approx. total budget (USD)</label>
+            <input id="ep-budget" type="number" min="0" placeholder="2500" />
+          </div>
+        </div>
+
+        <label for="ep-venue" style="margin-top:10px;">Venue type</label>
+        <select id="ep-venue">
+          <option value="church_campus">Church campus</option>
+          <option value="rented_hall">Rented hall</option>
+          <option value="outdoor_ground">Outdoor ground</option>
+        </select>
+
+        <div class="btn-row">
+          <button class="btn btn-primary" id="ep-generate">
+            💰 Generate budget & timeline
+          </button>
+        </div>
+
+        <div id="ep-output" class="output"></div>
+      </section>
+
+      <!-- 4. Metrics Dashboard -->
+      <section id="metrics" class="card" style="display:none;">
+        <h2>📊 Metrics & Dashboard <span class="badge">Step 4</span></h2>
+        <p class="lead">
+          Enter your latest numbers. The app will summarize trends and focus areas.
+        </p>
+
+        <div class="grid-2">
+          <div>
+            <label for="md-period">Reporting period</label>
+            <input id="md-period" type="text" placeholder="2026-Q1 or March 2026" />
+          </div>
+          <div>
+            <label for="md-age">Average age now</label>
+            <input id="md-age" type="number" min="10" max="90" />
+          </div>
+          <div>
+            <label for="md-att">Total weekly attendance</label>
+            <input id="md-att" type="number" min="0" />
+          </div>
+          <div>
+            <label for="md-youth-att">Youth weekly attendance</label>
+            <input id="md-youth-att" type="number" min="0" />
+          </div>
+          <div>
+            <label for="md-new-youth">New youth contacts this period</label>
+            <input id="md-new-youth" type="number" min="0" />
+          </div>
+          <div>
+            <label for="md-decisions">New decisions for Christ</label>
+            <input id="md-decisions" type="number" min="0" />
+          </div>
+          <div>
+            <label for="md-deep-dive">Youth in Deep-Dive discipleship</label>
+            <input id="md-deep-dive" type="number" min="0" />
+          </div>
+          <div>
+            <label for="md-serving">Youth serving in ministry</label>
+            <input id="md-serving" type="number" min="0" />
+          </div>
+        </div>
+
+        <div style="margin-top:12px;">
+          <label>Intangible scores (1–10)</label>
+          <div class="grid-2">
+            <div>
+              <label for="md-vision">Vision alignment</label>
+              <input id="md-vision" type="number" min="1" max="10" />
+            </div>
+            <div>
+              <label for="md-culture">Youth culture vibrancy</label>
+              <input id="md-culture" type="number" min="1" max="10" />
+            </div>
+            <div>
+              <label for="md-prayer">Prayer engagement</label>
+              <input id="md-prayer" type="number" min="1" max="10" />
+            </div>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-primary" id="md-generate">
+            🧮 Analyze trends & recommendations
+          </button>
+        </div>
+
+        <div id="md-output" class="output"></div>
+      </section>
+
+      <!-- 5. Follow-Up Journey -->
+      <section id="followup" class="card" style="display:none;">
+        <h2>🌱 Follow-Up Journey Builder <span class="badge">Step 5</span></h2>
+        <p class="lead">
+          Create a 4–12 week discipleship path for a new believer / new youth.
+        </p>
+
+        <div class="grid-2">
+          <div>
+            <label for="fu-name">Name</label>
+            <input id="fu-name" type="text" placeholder="Lamdinsang" />
+          </div>
+          <div>
+            <label for="fu-age">Age</label>
+            <input id="fu-age" type="number" min="8" max="30" />
+          </div>
+          <div>
+            <label for="fu-date">Decision / first contact date</label>
+            <input id="fu-date" type="date" />
+          </div>
+          <div>
+            <label for="fu-source">Source</label>
+            <select id="fu-source">
+              <option value="epic_event">Epic Event</option>
+              <option value="friend_invite">Friend invite</option>
+              <option value="sunday_service">Sunday Service</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+        </div>
+
+        <label for="fu-availability" style="margin-top:10px;">Available days / times</label>
+        <textarea id="fu-availability" placeholder="Example: Saturdays after 4pm, Sunday afternoons"></textarea>
+
+        <div class="btn-row">
+          <button class="btn btn-primary" id="fu-generate">
+            🗺️ Generate personal journey
+          </button>
+        </div>
+
+        <div id="fu-output" class="output"></div>
+      </section>
+
+      <!-- 6. Youth Leaders Track -->
+      <section id="leaders" class="card" style="display:none;">
+        <h2>🚀 Youth Leadership Track Designer</h2>
+        <p class="lead">
+          Design a 6–12 month leadership pathway for youth: training, practice, milestones.
+        </p>
+
+        <div class="grid-2">
+          <div>
+            <label for="yl-cohort-name">Cohort name</label>
+            <input id="yl-cohort-name" type="text" placeholder="2026 Youth Leaders Batch 1" />
+          </div>
+          <div>
+            <label for="yl-size">Cohort size</label>
+            <input id="yl-size" type="number" min="2" placeholder="25" />
+          </div>
+          <div>
+            <label for="yl-duration">Duration (months)</label>
+            <input id="yl-duration" type="number" min="3" max="18" placeholder="9" />
+          </div>
+          <div>
+            <label for="yl-frequency">Meeting frequency</label>
+            <select id="yl-frequency">
+              <option value="weekly">Weekly</option>
+              <option value="biweekly">Every 2 weeks</option>
+              <option value="monthly">Monthly</option>
+            </select>
+          </div>
+        </div>
+
+        <label for="yl-tracks" style="margin-top:10px;">Ministry tracks (comma-separated)</label>
+        <textarea id="yl-tracks" placeholder="worship, tech, children, evangelism"></textarea>
+
+        <div class="btn-row">
+          <button class="btn btn-primary" id="yl-generate">
+            📚 Generate curriculum & milestones
+          </button>
+        </div>
+
+        <div id="yl-output" class="output"></div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    // Simple SPA navigation
+    const navLinks = document.querySelectorAll(".nav-link");
+    const sections = {
+      roadmap: document.getElementById("roadmap"),
+      coach: document.getElementById("coach"),
+      epic: document.getElementById("epic"),
+      metrics: document.getElementById("metrics"),
+      followup: document.getElementById("followup"),
+      leaders: document.getElementById("leaders"),
+    };
+
+    navLinks.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const id = btn.getAttribute("data-section");
+        navLinks.forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        Object.entries(sections).forEach(([key, el]) => {
+          el.style.display = key === id ? "block" : "none";
+        });
+      });
+    });
+
+    function pretty(obj) {
+      return JSON.stringify(obj, null, 2);
+    }
+
+    // Fake AI function for now (structures data nicely).
+    async function callAI(systemPurpose, userPayload, example) {
+      return {
+        system_purpose: systemPurpose,
+        input: userPayload,
+        suggested_plan: example || null,
+        info: "This is a local demo. A developer can connect this to a real AI API later."
+      };
+    }
+
+    // 1. Roadmap generator
+    document.getElementById("rm-generate").addEventListener("click", async () => {
+      const payload = {
+        church_name: document.getElementById("rm-church-name").value || "N. Chaljang Baptist Church",
+        location: document.getElementById("rm-location").value || "",
+        total_members: Number(document.getElementById("rm-members").value || 0),
+        average_age: Number(document.getElementById("rm-age").value || 0),
+        youth_attendance_current: Number(document.getElementById("rm-youth-att").value || 0),
+        youth_population_region: Number(document.getElementById("rm-youth-pop").value || 0),
+        budget_level: document.getElementById("rm-budget").value,
+        start_month: document.getElementById("rm-start-month").value,
+        challenges: document.getElementById("rm-challenges").value.trim(),
+      };
+
+      const examplePlan = {
+        twelve_month_plan: [
+          {
+            months: "1–2",
+            focus: "Assess",
+            goals: [
+              "Measure average age and youth attendance",
+              "Map youth (13–19) in the church’s footprint"
+            ],
+            tasks: [
+              "Form 3–5 person assessment team",
+              "Run surveys with parents, youth, leaders",
+              "Compile 3 years of attendance + age data"
+            ]
+          },
+          {
+            months: "3–4",
+            focus: "Dream",
+            goals: [
+              "Write Dream Statement & BHAGs for youth and church"
+            ],
+            tasks: [
+              "Host two half-day leadership vision retreats",
+              "Teach about the challenge of an aging church",
+              "Define profile of a mature 21-year-old disciple"
+            ]
+          },
+          {
+            months: "5–7",
+            focus: "Strategize",
+            goals: [
+              "Launch youth leadership pipeline",
+              "Design Epic Event & Deep-Dive discipleship",
+              "Create ecosystem where youth serve regularly"
+            ],
+            tasks: [
+              "Start weekly leadership track for 20–30 youth",
+              "Choose Epic Event theme and date",
+              "Design 12-week Deep-Dive groups"
+            ]
+          },
+          {
+            months: "8–9",
+            focus: "Plan",
+            goals: [
+              "Convert strategies into detailed 6-month action plan"
+            ],
+            tasks: [
+              "Use planning template for weeks / teams / budgets",
+              "Create weekly KPIs for youth, discipleship, serving"
+            ]
+          },
+          {
+            months: "10–12",
+            focus: "Execute",
+            goals: [
+              "Host Epic Event and integrate youth into discipleship",
+              "Review metrics and adjust plan for Year 2"
+            ],
+            tasks: [
+              "Run Epic Event + same-day follow-up",
+              "Start Deep-Dive cycle for new believers",
+              "Publish annual Youth Impact Report"
+            ]
+          }
+        ]
+      };
+
+      const combined = await callAI(
+        "Generate a 12-month Remarkable Church roadmap.",
+        payload,
+        examplePlan
+      );
+      document.getElementById("rm-output").textContent = pretty(combined);
+    });
+
+    document.getElementById("rm-clear").addEventListener("click", () => {
+      ["rm-church-name","rm-location","rm-members","rm-age","rm-youth-att","rm-youth-pop","rm-challenges"]
+        .forEach(id => document.getElementById(id).value = "");
+      document.getElementById("rm-output").textContent = "";
+    });
+
+    // 2. Monthly coach
+    document.getElementById("mc-generate").addEventListener("click", async () => {
+      const month = Number(document.getElementById("mc-month").value || 1);
+      const week = Number(document.getElementById("mc-week").value || 1);
+      const roadmapJson = document.getElementById("mc-roadmap-json").value.trim();
+      const progress = document.getElementById("mc-progress").value.trim();
+
+      let roadmapParsed = null;
+      try {
+        if (roadmapJson) roadmapParsed = JSON.parse(roadmapJson);
+      } catch (e) {
+        roadmapParsed = { error: "Invalid JSON. Please paste valid roadmap JSON." };
+      }
+
+      const example = {
+        this_week_focus: "Work on DREAM step for this month.",
+        key_objectives: ["Run one vision meeting", "Refine Dream Statement"],
+        checklist: [
+          "Confirm date/time for vision meeting",
+          "Prepare 3 key scriptures about God’s heart for the next generation"
+        ],
+        encouragement: "You are moving step by step—faithfulness over time will build a remarkable youth church.",
+        risks_to_watch: ["Doing too much alone instead of building a team"]
+      };
+
+      const resp = await callAI(
+        "From roadmap + current month/week, output a weekly checklist and encouragement.",
+        {
+          current_month: month,
+          week_of_month: week,
+          roadmap: roadmapParsed,
+          progress_note: progress
+        },
+        example
+      );
+      document.getElementById("mc-output").textContent = pretty(resp);
+    });
+
+    // 3. Epic event planner
+    document.getElementById("ep-generate").addEventListener("click", async () => {
+      const payload = {
+        event_name: document.getElementById("ep-name").value || "Hope Night",
+        event_date: document.getElementById("ep-date").value || null,
+        expected_attendance: Number(document.getElementById("ep-size").value || 0),
+        budget_limit: Number(document.getElementById("ep-budget").value || 0),
+        venue_type: document.getElementById("ep-venue").value
+      };
+
+      const baseBudget = payload.budget_limit || 2500;
+      const budgetExample = {
+        budget_plan: {
+          total_estimated_cost: baseBudget,
+          categories: {
+            marketing: Math.round(baseBudget * 0.15),
+            stage_sound: Math.round(baseBudget * 0.25),
+            lighting: Math.round(baseBudget * 0.12),
+            guest_speaker_or_band: Math.round(baseBudget * 0.17),
+            refreshments: Math.round(baseBudget * 0.16),
+            follow_up_materials: Math.round(baseBudget * 0.15)
+          }
+        },
+        timeline_weeks: [
+          { week: -10, focus: "Theme & team", tasks: ["Choose theme", "Recruit core team"] },
+          { week: -6, focus: "Marketing launch", tasks: ["Poster + social media release"] },
+          { week: -2, focus: "Final invite push", tasks: ["Youth invite challenge", "Campus visits"] },
+          { week: 0,   focus: "Event & decisions", tasks: ["Run event", "Collect follow-up info"] },
+          { week: 1,   focus: "Follow-up", tasks: ["Calls, visits, connect to groups"] }
+        ],
+        follow_up_plan: {
+          week_1: ["Call every decision card", "Invite to youth service"],
+          week_2_4: ["Start Deep-Dive groups", "Share testimonies in church"],
+          metrics_to_track: ["New youth contacts", "Decisions", "Deep-Dive attendance"]
+        }
+      };
+
+      const resp = await callAI(
+        "Design an Epic Event budget + 10-week prep + follow-up plan.",
+        payload,
+        budgetExample
+      );
+      document.getElementById("ep-output").textContent = pretty(resp);
+    });
+
+    // 4. Metrics dashboard
+    document.getElementById("md-generate").addEventListener("click", async () => {
+      const payload = {
+        period: document.getElementById("md-period").value || "",
+        metrics: {
+          average_age: Number(document.getElementById("md-age").value || 0),
+          total_attendance: Number(document.getElementById("md-att").value || 0),
+          youth_attendance: Number(document.getElementById("md-youth-att").value || 0),
+          new_youth_contacts: Number(document.getElementById("md-new-youth").value || 0),
+          new_decisions_for_christ: Number(document.getElementById("md-decisions").value || 0),
+          deep_dive_participants: Number(document.getElementById("md-deep-dive").value || 0),
+          youth_serving: Number(document.getElementById("md-serving").value || 0)
+        },
+        intangibles: {
+          vision_alignment: Number(document.getElementById("md-vision").value || 0),
+          youth_culture_vibrancy: Number(document.getElementById("md-culture").value || 0),
+          prayer_engagement: Number(document.getElementById("md-prayer").value || 0)
+        }
+      };
+
+      const example = {
+        period: payload.period,
+        summary: {
+          overall_trend: "improving",
+          headline: "Youth attendance and serving are growing, but Deep-Dive groups need strengthening."
+        },
+        strengths: ["Youth attendance", "Prayer engagement"],
+        weaknesses: ["Deep-Dive participation", "New youth contacts"],
+        recommended_focus_next_period: [
+          "Invest in inviting youth into Deep-Dive groups",
+          "Equip current youth to bring friends"
+        ]
+      };
+
+      const resp = await callAI(
+        "Summarize trends, detect strengths/weaknesses, and suggest next focus areas.",
+        payload,
+        example
+      );
+      document.getElementById("md-output").textContent = pretty(resp);
+    });
+
+    // 5. Follow-up journey
+    document.getElementById("fu-generate").addEventListener("click", async () => {
+      const payload = {
+        name: document.getElementById("fu-name").value || "New Friend",
+        age: Number(document.getElementById("fu-age").value || 0),
+        decision_date: document.getElementById("fu-date").value || null,
+        source: document.getElementById("fu-source").value,
+        availability: document.getElementById("fu-availability").value.trim()
+      };
+
+      const examplePath = {
+        personal_discipleship_path: [
+          {
+            week: 1,
+            theme: "Welcome & Assurance",
+            actions: [
+              "Welcome message + prayer",
+              "Invite to youth service",
+              "Give New Believer booklet"
+            ]
+          },
+          {
+            week: 2,
+            theme: "Foundations",
+            actions: [
+              "Start Deep-Dive group",
+              "Teach assurance of salvation"
+            ]
+          },
+          {
+            week: 4,
+            theme: "Belong & Serve",
+            actions: [
+              "Share testimony in small group",
+              "Introduce serving opportunity"
+            ]
+          }
+        ],
+        checkpoints: [
+          "Attends weekly group",
+          "Reads Bible at least 4 days/week",
+          "Serving at least once a month"
+        ]
+      };
+
+      const resp = await callAI(
+        "Design a 4–12 week follow-up journey with weekly actions and checkpoints.",
+        payload,
+        examplePath
+      );
+      document.getElementById("fu-output").textContent = pretty(resp);
+    });
+
+    // 6. Youth leadership track
+    document.getElementById("yl-generate").addEventListener("click", async () => {
+      const tracks = (document.getElementById("yl-tracks").value || "")
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean);
+
+      const payload = {
+        cohort_name: document.getElementById("yl-cohort-name").value || "Youth Leaders Cohort",
+        cohort_size: Number(document.getElementById("yl-size").value || 0),
+        duration_months: Number(document.getElementById("yl-duration").value || 9),
+        meeting_frequency: document.getElementById("yl-frequency").value,
+        ministry_tracks: tracks.length ? tracks : ["worship", "tech", "children", "evangelism"]
+      };
+
+      const exampleCurriculum = {
+        leadership_curriculum: [
+          {
+            month: 1,
+            theme: "Identity & Calling",
+            sessions: ["Who I am in Christ", "Heart of a Servant"],
+            practicals: ["Serve on set-up team", "Daily devotional habit"]
+          },
+          {
+            month: 3,
+            theme: "Leading Others",
+            sessions: ["How to lead a small group"],
+            practicals: ["Co-lead small group for 4 weeks"]
+          },
+          {
+            month: 6,
+            theme: "Mission & Multiplication",
+            sessions: ["Sharing faith", "Raising other leaders"],
+            practicals: ["Lead simple outreach", "Mentor a younger teen"]
+          }
+        ],
+        assessments: [
+          "Mid-term character & skills review",
+          "End-of-track commissioning night"
+        ]
+      };
+
+      const resp = await callAI(
+        "Design a youth leadership development journey with monthly themes, sessions and practicals.",
+        payload,
+        exampleCurriculum
+      );
+      document.getElementById("yl-output").textContent = pretty(resp);
+    });
+  </script>
+</body>
+</html>
